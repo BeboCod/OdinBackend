@@ -10,9 +10,14 @@ import io.ktor.server.routing.*
 import com.google.cloud.firestore.Firestore
 import com.google.firebase.database.FirebaseDatabase
 import example.com.FirebaseAdmin.FirebaseAdmin
+import example.com.repository.login.LoginRepository
 
 fun Application.configureRouting() {
-    routing {
+    routing  {
+        route("odin/api/v0"){
+            route("/auth"){
 
+            }
+        }
     }
 }
