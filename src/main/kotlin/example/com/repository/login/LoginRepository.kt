@@ -1,18 +1,21 @@
 package example.com.repository.login
 
-import com.google.cloud.firestore.FirestoreException
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseAuthException
-import com.google.firebase.auth.UserRecord.CreateRequest
+import com.google.firebase.cloud.FirestoreClient
+import com.google.firebase.database.FirebaseDatabase
 import example.com.response.ApiResponse
+import example.com.response.AuthenticateResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.ArrayList
 
-class LoginRepository {
+class LoginRepository: LoginInterface {
 
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+    private val firestore = FirestoreClient.getFirestore()
+    private val usersCollection = firestore.collection("Users")
 
-    suspend fun authenticate(tokenId: String): ApiResponse<String> {
+    override suspend fun authenticate(tokenId: String): ApiResponse<AuthenticateResponse> {
         return withContext(Dispatchers.IO) {
             try {
                 val userToken = auth.verifyIdToken(tokenId) ?: return@withContext ApiResponse(
@@ -20,34 +23,33 @@ class LoginRepository {
                     message = "Invalid token"
                 )
                 val id = userToken.uid
-                ApiResponse(success = true, message = "User authenticate successfully", "")
+                val document = usersCollection.document(id).get().get() ?: return@withContext ApiResponse(
+                    success = false,
+                    message = "Invalid token"
+                )
+
+                val imageUrl = userToken.picture
+                val username = userToken.name
+                val verified = userToken.claims["verified"].toString().toBoolean()
+                val followers = document.get("followers") as? List<String>//almacena id de usuarios
+                val post = document.get("post") as? List<String>//almacena id de posts
+                val comments = document.get("comments") as? List<String>//alamcena id de comentarios
+
+                val response = AuthenticateResponse(
+                    id = id,
+                    name = username,
+                    imageUrl = imageUrl,
+                    verification = verified,
+                    followers = followers,
+                    posts = post,
+                    comments = comments
+                )
+
+                ApiResponse(success = true, message = "User authenticate successfully", response)
             } catch (e: Exception) {
                 ApiResponse(success = false, message = e.message ?: "Unknown error")
             }
         }
     }
 
-    suspend fun createPrueba(): ApiResponse<String?> {
-        return withContext(Dispatchers.IO) {
-            try {
-                val decryptedEmail = "Christopher.cop787@gmail.com"
-                val decryptedPassword = "cris2004"
-
-                // Create Firebase user
-                val createRequest = CreateRequest()
-                    .setEmail(decryptedEmail)
-                    .setPassword(decryptedPassword)
-
-                val userRecord = auth.createUser(createRequest)
-                val userId = userRecord.uid
-                ApiResponse(success = true, message = "User create successfully", userId)
-            } catch (e: FirebaseAuthException) {
-                ApiResponse(success = false, message = e.message ?: "Unknown error")
-            } catch (e: FirestoreException) {
-                ApiResponse(success = false, message = e.message ?: "Unknown error")
-            } catch (e: Exception) {
-                ApiResponse(success = false, message = e.message ?: "Unknown error")
-            }
-        }
-    }
 }
