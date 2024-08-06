@@ -4,3 +4,6 @@ ktor:
             - example.com.ApplicationKt.module
     deployment:
         port: 8080
+
+    env_variables:
+        SECRET_NAME: "projects/114210983918/secrets/ApiOdinGoogleCloud/versions/1"

@@ -6,24 +6,18 @@ import com.google.cloud.secretmanager.v1.SecretManagerServiceClient
 import com.google.cloud.secretmanager.v1.SecretManagerServiceSettings
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
-import kotlinx.io.IOException
-import java.io.ByteArrayInputStream
 import java.io.FileInputStream
 
 object FirebaseAdmin {
     private const val STORAGE_BUCKET = "ktor-firebase-storage.appspot.com"
+    private const val CREDENTIALS_PATH = "C:/Users/chris/OneDrive/Desktop/odin-883a2-2e9215e49c0f.json"
 
     private val options: FirebaseOptions by lazy {
-        val credentialsPath = "C:/Users/chris/OneDrive/Desktop/odin-883a2-firebase-adminsdk-2bmbn-733feb3774.json"
-        val credentials: GoogleCredentials
-        try {
-            credentials = GoogleCredentials.fromStream(FileInputStream(credentialsPath))
-        } catch (e: IOException) {
-            throw RuntimeException("Failed to load credentials from path: $credentialsPath", e)
-        }
+        val credentials = GoogleCredentials.fromStream(FileInputStream(CREDENTIALS_PATH))
         val settings = SecretManagerServiceSettings.newBuilder()
-            .setCredentialsProvider{ credentials }
+            .setCredentialsProvider { credentials }
             .build()
+
         val client = SecretManagerServiceClient.create(settings)
         try {
             val secretName = "projects/114210983918/secrets/ApiOdinGoogleCloud/versions/1"
@@ -32,7 +26,7 @@ object FirebaseAdmin {
             val serviceAccountJson = response.payload.data.toStringUtf8()
 
             FirebaseOptions.builder()
-                .setCredentials(GoogleCredentials.fromStream(ByteArrayInputStream(serviceAccountJson.toByteArray())))
+                .setCredentials(GoogleCredentials.fromStream(serviceAccountJson.byteInputStream()))
                 .setStorageBucket(STORAGE_BUCKET)
                 .build()
         } finally {
