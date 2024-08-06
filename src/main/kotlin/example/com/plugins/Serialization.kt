@@ -22,7 +22,7 @@ fun Application.configureSerialization() {
                 post<AuthenticateRequest> {
                     try {
                         val request = call.receive<AuthenticateRequest>()
-                        val apiResponse = (LoginService(LoginRepository())).authenticate(request)
+                        val apiResponse = LoginService(LoginRepository()).authenticate(request)
                         if (apiResponse.success) {
                             call.respond(HttpStatusCode.Accepted, apiResponse.data!!)
                         } else {
